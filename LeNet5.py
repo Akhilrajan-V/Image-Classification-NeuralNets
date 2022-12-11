@@ -14,9 +14,9 @@ test_data = datasets.MNIST('./Data', train=False, transform=transforms.Compose([
 print("\n",train_data)
 print("\n",test_data)
 
-# Data Train Parameters
-batch_size = 128
-epochs = 25
+# DATA TRAIN PARAMETERS
+batch_size = 128  # Reduce Batch size if necessary
+epochs = 15
 learning_rate = 0.001
 
 # Load Data into DataLoader
@@ -27,7 +27,9 @@ test_dataLoader = torch.utils.data.DataLoader(dataset=test_data, batch_size=batc
 device = ('cuda' if torch.cuda.is_available() else 'CPU')
 print("Utilizing", device)
 
-
+"""
+ ------- LeNet5 Model ------- 
+"""
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
@@ -79,38 +81,39 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 total_step = len(train_dataLoader)
 epoch_loss = []
 
-# Training Loop
-for epoch in range(epochs):
 
-    model.train()
-    total_loss = 0
-    i = 0
-    with tqdm(train_dataLoader, unit="batch") as tepoch:
+def train(model):
+    # Training Loop
+    for epoch in range(epochs):
 
-        # for i, (images, labels) in enumerate(train_dataLoader):
-        for images, labels in tepoch:
-            tepoch.set_description(f"Epoch {epoch+1}")
-            image = images.to(device)
-            label = labels.to(device)
-            i+=1
-            # Forward PASS
-            output = model(image)
-            predictions = output.argmax(dim=1, keepdim=True).squeeze()
-            loss = loss_fn(output, label)
-            # total_loss += loss
+        model.train()
+        total_loss = 0
+        i = 0
+        with tqdm(train_dataLoader, unit="batch") as tepoch:
 
-            # Backpropagation (Weight UPDATE)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            # for i, (images, labels) in enumerate(train_dataLoader):
+            for images, labels in tepoch:
+                tepoch.set_description(f"Epoch {epoch+1}")
+                image = images.to(device)
+                label = labels.to(device)
+                i+=1
+                # Forward PASS
+                output = model(image)
+                predictions = output.argmax(dim=1, keepdim=True).squeeze()
+                loss = loss_fn(output, label)
+                # total_loss += loss
 
-            correct = (predictions == label).sum().item()
-            accuracy = correct / batch_size
+                # Backpropagation (Weight UPDATE)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-            tepoch.set_postfix(loss=loss.item(), accuracy=100. * accuracy)
-        # epoch_loss = epoch_loss.append(total_loss/i)
+                correct = (predictions == label).sum().item()
+                accuracy = correct / batch_size
 
-torch.save(model.state_dict(), '../ML-Transfer_Learning/Model')
+                tepoch.set_postfix(loss=loss.item(), accuracy=100. * accuracy)
+            # epoch_loss = epoch_loss.append(total_loss/i)
+
 
 # Plot Training loss
 # plt.plot(epochs, epoch_loss)
@@ -134,5 +137,6 @@ def accuracy(model):
         print("Model has an accuracy of {}%".format(acc))
 
 
+train(model=model)
 accuracy(model=model)
-# plt.show()
+
